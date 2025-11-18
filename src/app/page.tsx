@@ -68,37 +68,25 @@ export default function Home() {
         <thead>
           <tr>
             <th>First Name</th>
-          </tr>
-          <tr>
             <th>Last Name</th>
-          </tr>
-          <tr>
             <th>City</th>
-          </tr>
-          <tr>
             <th>Degree</th>
-          </tr>
-          <tr>
             <th>Specialties</th>
-          </tr>
-          <tr>
             <th>Years of Experience</th>
-          </tr>
-          <tr>
             <th>Phone Number</th>
           </tr>
         </thead>
         <tbody>
-          {filteredAdvocates.map((advocate) => {
+          {filteredAdvocates.map((advocate, index) => {
             return (
-              <tr>
+              <tr key={advocate.id || index}>
                 <td>{advocate.firstName}</td>
                 <td>{advocate.lastName}</td>
                 <td>{advocate.city}</td>
                 <td>{advocate.degree}</td>
                 <td>
-                  {advocate.specialties.map((s) => (
-                    <div>{s}</div>
+                  {advocate.specialties.map((specialty, index) => (
+                    <div key={index}>{specialty}</div>
                   ))}
                 </td>
                 <td>{advocate.yearsOfExperience}</td>
