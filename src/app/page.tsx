@@ -19,7 +19,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
-    console.log("fetching advocates...");
     fetch("/api/advocates")
       .then((response) => response.json())
       .then((jsonResponse: { data: Advocate[] }) => {
