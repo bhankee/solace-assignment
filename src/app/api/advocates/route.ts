@@ -1,12 +1,33 @@
+import { NextRequest, NextResponse } from "next/server";
 import db from "../../../db";
 import { advocates } from "../../../db/schema";
 import { advocateData } from "../../../db/seed/advocates";
 
-export async function GET() {
-  // Uncomment this line to use a database
-  // const data = await db.select().from(advocates);
+/**
+ * NOTE: For now filtering happens over statically seeded data.
+ * If database configuration is enabled, this logic moves into the SQL query
+ * using indexed filtering and pagination.
+ */
 
-  const data = advocateData;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const search = searchParams.get("q")?.trim().toLowerCase() || "";
 
-  return Response.json({ data });
+  if (!search) {
+    return NextResponse.json({ data: advocateData });
+  }
+
+  const filtered = advocateData.filter((advocate) => {
+    return (
+      advocate.firstName.toLowerCase().includes(search) ||
+      advocate.lastName.toLowerCase().includes(search) ||
+      advocate.city.toLowerCase().includes(search) ||
+      advocate.degree.toLowerCase().includes(search) ||
+      advocate.specialties.join(" ").toLowerCase().includes(search) ||
+      advocate.yearsOfExperience.toString().includes(search) ||
+      advocate.phoneNumber.toString().includes(search)
+    );
+  });
+
+  return NextResponse.json({ data: filtered });
 }

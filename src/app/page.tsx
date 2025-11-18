@@ -3,59 +3,65 @@
 import { useEffect, useState } from "react";
 
 type Advocate = {
-  id: string; // or number depending on your DB
   firstName: string;
   lastName: string;
   city: string;
   degree: string;
   specialties: string[];
   yearsOfExperience: number;
-  phoneNumber: string;
+  phoneNumber: number;
 };
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load initial advocates
   useEffect(() => {
+    console.log("Fetching advocates on load...");
+    setLoading(true);
+
     fetch("/api/advocates")
-      .then((response) => response.json())
-      .then((jsonResponse: { data: Advocate[] }) => {
-        setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
-      });
+      .then((res) => res.json())
+      .then((json: { data: Advocate[] }) => {
+        setAdvocates(json.data);
+        setFilteredAdvocates(json.data);
+      })
+      .catch(() => setError("Failed to load advocates"))
+      .finally(() => setLoading(false));
   }, []);
 
-  // Helper function to check if a value matches the search term
-  // Would go into a util file ideally.
-  const matchesSearch = (value: any, searchTerm: string): boolean => {
-    if (!searchTerm) return true;
-    return String(value).toLowerCase().includes(searchTerm.toLowerCase());
-  };
+  // Fetch via API while debouncing input to avoid too many API calls
+  useEffect(() => {
+    if (!searchTerm) return;
+
+    const timer = setTimeout(() => {
+      setLoading(true);
+      setError(null);
+
+      console.log("Fetching advocates on search term change:", searchTerm);
+      fetch(`/api/advocates?q=${encodeURIComponent(searchTerm)}`)
+        .then((res) => res.json())
+        .then((json: { data: Advocate[] }) => {
+          setFilteredAdvocates(json.data);
+        })
+        .catch(() => setError("Error filtering advocates"))
+        .finally(() => setLoading(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    setSearchTerm(searchTerm);
-
-    console.log("filtering advocates...");
-
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        matchesSearch(advocate.firstName, searchTerm) ||
-        matchesSearch(advocate.lastName, searchTerm) ||
-        matchesSearch(advocate.city, searchTerm) ||
-        matchesSearch(advocate.degree, searchTerm) ||
-        matchesSearch(advocate.specialties.join(" "), searchTerm) ||
-        matchesSearch(String(advocate.yearsOfExperience), searchTerm)
-      );
-    });
-
-    setFilteredAdvocates(filteredAdvocates);
+    setSearchTerm(e.target.value);
   };
 
   const onClick = () => {
     console.log(advocates);
+    setSearchTerm("");
     setFilteredAdvocates(advocates);
   };
 
@@ -71,6 +77,7 @@ export default function Home() {
             type="text"
             placeholder="Search by name, city, degree, specialty..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={searchTerm}
             onChange={onChange}
           />
           <button
@@ -89,7 +96,11 @@ export default function Home() {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          {filteredAdvocates.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12 text-gray-500">Loading...</div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-500">{error}</div>
+          ) : filteredAdvocates.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               No advocates found
             </div>
@@ -123,7 +134,7 @@ export default function Home() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredAdvocates.map((advocate, index) => {
                   return (
-                    <tr key={advocate.id || index} className="hover:bg-gray-50">
+                    <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {advocate.firstName}
                       </td>
