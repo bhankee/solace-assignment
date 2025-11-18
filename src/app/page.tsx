@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [advocates, setAdvocates] = useState([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     console.log("fetching advocates...");
@@ -16,20 +17,27 @@ export default function Home() {
     });
   }, []);
 
+  // Helper function to check if a value matches the search term
+  // Would go into a util file ideally.
+  const matchesSearch = (value: any, searchTerm: string): boolean => {
+    if (!searchTerm) return true;
+    return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+  };
+
   const onChange = (e) => {
     const searchTerm = e.target.value;
-
-    document.getElementById("search-term").innerHTML = searchTerm;
+    setSearchTerm(searchTerm);
 
     console.log("filtering advocates...");
+
     const filteredAdvocates = advocates.filter((advocate) => {
       return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
+        matchesSearch(advocate.firstName, searchTerm) ||
+        matchesSearch(advocate.lastName, searchTerm) ||
+        matchesSearch(advocate.city, searchTerm) ||
+        matchesSearch(advocate.degree, searchTerm) ||
+        matchesSearch(advocate.specialties.join(" "), searchTerm) ||
+        matchesSearch(String(advocate.yearsOfExperience), searchTerm)
       );
     });
 
@@ -49,7 +57,7 @@ export default function Home() {
       <div>
         <p>Search</p>
         <p>
-          Searching for: <span id="search-term"></span>
+          Searching for: <span>{searchTerm}</span>
         </p>
         <input style={{ border: "1px solid black" }} onChange={onChange} />
         <button onClick={onClick}>Reset Search</button>
@@ -64,7 +72,6 @@ export default function Home() {
           <tr>
             <th>Last Name</th>
           </tr>
-
           <tr>
             <th>City</th>
           </tr>
